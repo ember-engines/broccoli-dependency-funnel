@@ -1,5 +1,7 @@
 # broccoli-dependency-funnel
 
+[![Build Status](https://travis-ci.org/ember-engines/broccoli-dependency-funnel.svg?branch=master)](https://travis-ci.org/ember-engines/broccoli-dependency-funnel)
+
 Summarize what broccoli-dependency-funnel does here.
 
 ## Usage
