@@ -28,6 +28,9 @@ export default class BroccoliDependencyFunnel extends Plugin {
       throw new Error('Must specify exactly one of `include` or `exclude`.');
     }
 
+    this.entry = options.entry;
+    this.external = options.external;
+
     // An array and FSTree, respectively, representing the dependency graph of the
     // entry point or the non-dependency graph.
     this._depGraph = undefined;
@@ -41,7 +44,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
   build() {
       var inputPath = this.inputPaths[0];
 
-    // Check for changes in the files included in the rollup
+    // Check for changes in the files included in the dependency graph
     if (this._depGraph) {
       var incomingDepGraphTree = this._getFSTree(this._depGraph);
       var depGraphPatch = this._depGraphTree.calculatePatch(incomingDepGraphTree);
@@ -69,7 +72,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
     var modules = [];
 
-    var entryExists = existsSync(path.join(inputPath, this.options.rollup.entry));
+    var entryExists = existsSync(path.join(inputPath, this.entry));
     if (!entryExists && this.options.include) {
       return;
     } else if (!entryExists && this.options.exclude) {
@@ -79,8 +82,8 @@ export default class BroccoliDependencyFunnel extends Plugin {
     }
 
     var rollupOptions = {
-      entry: this.options.rollup.entry,
-      external: this.options.rollup.external || [],
+      entry: this.entry,
+      external: this.external || [],
       dest: 'foo.js',
       plugins: [
         {

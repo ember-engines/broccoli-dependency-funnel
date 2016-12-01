@@ -65,10 +65,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('returns a tree of the dependency graph when using include', async function() {
       node = new BroccoliDependencyFunnel(input, {
         include: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -82,10 +80,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('returns a tree excluding the dependency graph when using exclude', async function() {
       node = new BroccoliDependencyFunnel(input, {
         exclude: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -101,10 +97,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('is stable on unchanged rebuild with include', async function() {
       node = new BroccoliDependencyFunnel(input, {
         include: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -123,10 +117,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('is stable on unchanged rebuild with exclude', async function() {
       node = new BroccoliDependencyFunnel(input, {
         exclude: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -145,10 +137,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('is stable when changes occur outside dep graph and using include', async function() {
       node = new BroccoliDependencyFunnel(input, {
         include: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -170,10 +160,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('updates when changes occur in dep graph and using include', async function() {
       node = new BroccoliDependencyFunnel(input, {
         include: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -202,10 +190,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('updates when changes occur outside dep graph and using exclude', async function() {
       node = new BroccoliDependencyFunnel(input, {
         exclude: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
@@ -243,10 +229,8 @@ describe('BroccoliDependencyFunnel', function() {
     it('updates when changes occur in dep graph and using exclude', async function() {
       node = new BroccoliDependencyFunnel(input, {
         exclude: true,
-        rollup: {
-          entry: 'routes.js',
-          external: [ 'ember-engines/routes' ]
-        }
+        entry: 'routes.js',
+        external: [ 'ember-engines/routes' ]
       });
 
       pipeline = new broccoli.Builder(node);
