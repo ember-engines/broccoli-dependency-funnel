@@ -29,6 +29,9 @@ export default class BroccoliDependencyFunnel extends Plugin {
       throw new Error('Must specify exactly one of `include` or `exclude`.');
     }
 
+    this.include = options.include;
+    this.exclude = options.exclude;
+
     this.entry = options.entry;
     this.external = options.external;
 
@@ -38,8 +41,6 @@ export default class BroccoliDependencyFunnel extends Plugin {
     this._depGraphTree = undefined;
     this._nonDepGraph = undefined;
     this._nonDepGraphTree = undefined;
-
-    this.options = options;
   }
 
   build() {
@@ -60,11 +61,11 @@ export default class BroccoliDependencyFunnel extends Plugin {
           return;
         }
 
-        if (this.options.include) {
+        if (this.include) {
           return;
         }
 
-        if (this.options.exclude) {
+        if (this.exclude) {
           FSTree.applyPatch(inputPath, this.outputPath, nonDepGraphPatch);
           return;
         }
@@ -74,9 +75,9 @@ export default class BroccoliDependencyFunnel extends Plugin {
     let modules = [];
 
     let entryExists = existsSync(path.join(inputPath, this.entry));
-    if (!entryExists && this.options.include) {
+    if (!entryExists && this.include) {
       return;
-    } else if (!entryExists && this.options.exclude) {
+    } else if (!entryExists && this.exclude) {
       modules = fs.readdirSync(inputPath);
       this.copy(modules);
       return;
@@ -111,8 +112,6 @@ export default class BroccoliDependencyFunnel extends Plugin {
     };
 
     return rollup(rollupOptions).then(() => {
-      let toCopy;
-
       this._depGraph = modules.sort();
       this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
         return modules.indexOf(module) === -1;
@@ -120,11 +119,11 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
       rimraf.sync(this.outputPath);
 
-      if (this.options.include) {
+      if (this.include) {
         toCopy = this._depGraph;
       }
 
-      if (this.options.exclude) {
+      if (this.exclude) {
         toCopy = this._nonDepGraph;
       }
 
