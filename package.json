@@ -1,7 +1,7 @@
 {
   "name": "broccoli-dependency-funnel",
   "version": "0.0.1",
-  "description": "A small description of broccoli-dependency-funnel",
+  "description": "Funnels a set of files included (or excluded) from a JS dependency graph",
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && broccoli build dist",
@@ -14,11 +14,20 @@
     "broccoli",
     "plugin"
   ],
-  "author": "",
+  "contributors": [
+    "Nathan Hammond",
+    "Robert Jackson",
+    "Trent Willis"
+  ],
   "license": "MIT",
   "repository": {
+    "type": "git",
+    "url": "https://github.com/ember-engines/broccoli-dependency-funnel.git"
   },
-  "homepage": "",
+  "bugs": {
+    "url": "https://github.com/ember-engines/broccoli-dependency-funnel/issues"
+  },
+  "homepage": "https://github.com/ember-engines/broccoli-dependency-funnel#readme",
   "files": [
     "dist/",
     "!dist/tests"
