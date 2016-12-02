@@ -42,7 +42,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
   }
 
   build() {
-      var inputPath = this.inputPaths[0];
+    var inputPath = this.inputPaths[0];
 
     // Check for changes in the files included in the dependency graph
     if (this._depGraph) {
