@@ -1,4 +1,4 @@
-import 'es6-promise'; // for regenerator
+import Promise from 'es6-promise'; // for regenerator
 import 'regenerator-runtime/runtime'; // only for tests, because async/await needs it
 
 import BroccoliDependencyFunnel from '../';
@@ -58,7 +58,7 @@ describe('BroccoliDependencyFunnel', function() {
     return pipeline.cleanup().then(function() {
       node = undefined;
       pipeline = undefined;
-    });;
+    });
   });
 
   describe("build", function() {
@@ -220,7 +220,7 @@ describe('BroccoliDependencyFunnel', function() {
 
       await pipeline.build();
 
-      expect(fs.existsSync(directory + '/engine.js')).to.be.not.ok;
+      expect(file(directory + '/engine.js')).to.not.exist;
 
       routesRebuildStat = fs.statSync(directory + '/utils/herp.js');
       assertStatEqual(routesStat, routesRebuildStat, 'routes.js unchanged second time');

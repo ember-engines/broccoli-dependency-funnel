@@ -4,7 +4,7 @@ import Plugin from 'broccoli-plugin';
 import FSTree from 'fs-tree-diff';
 import Entry from 'fs-tree-diff/lib/entry';
 import existsSync from 'exists-sync';
-import heimdall from 'heimdalljs';
+import heimdall from 'heimdalljs'; // eslint-disable-line no-unused-vars
 import { default as _logger } from 'heimdalljs-logger';
 import rimraf from 'rimraf';
 import { rollup } from 'rollup';
@@ -14,7 +14,7 @@ import copyFile from './utils/copy-file';
 import existsStat from './utils/exists-stat';
 import filterDirectory from './utils/filter-directory';
 
-const logger = _logger('broccoli-dependency-funnel');
+const logger = _logger('broccoli-dependency-funnel'); // eslint-disable-line no-unused-vars
 
 export default class BroccoliDependencyFunnel extends Plugin {
   constructor(node, options = {}) {
