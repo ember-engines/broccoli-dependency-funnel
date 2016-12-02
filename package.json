@@ -7,6 +7,7 @@
     "build": "rm -rf dist && broccoli build dist",
     "build:serve": "broccoli serve",
     "test": "npm run build && mocha dist/tests",
+    "test:lint": "npm run build && mocha dist/tests/lint.js",
     "test:debug": "npm run build && mocha debug dist/tests",
     "prepublish": "npm run build"
   },
@@ -44,6 +45,7 @@
     "fixturify": "^0.3.0",
     "fs-extra": "^0.30.0",
     "mocha": "^2.5.3",
+    "mocha-eslint": "^3.0.1",
     "regenerator-runtime": "^0.9.5",
     "walk-sync": "^0.3.1"
   },

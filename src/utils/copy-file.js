@@ -24,7 +24,9 @@ export default function copyFile(sourcePath, destPath) {
     // Also, make sure nothing already exists in the destination
     try {
       fs.unlinkSync(destPath);
-    } catch(e) {}
+    } catch(e) {
+      // Continue regardless of error
+    }
 
     symlinkOrCopy.sync(sourcePath, destPath);
   }
