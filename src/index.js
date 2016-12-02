@@ -21,7 +21,8 @@ export default class BroccoliDependencyFunnel extends Plugin {
     super([node], {
       name: options.name,
       annotation: options.annotation,
-      persistentOutput: true
+      persistentOutput: true,
+      needsCache: false
     });
 
     if (!(options.include ^ options.exclude)) {
