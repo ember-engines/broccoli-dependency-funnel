@@ -43,18 +43,18 @@ export default class BroccoliDependencyFunnel extends Plugin {
   }
 
   build() {
-    var inputPath = this.inputPaths[0];
+    let [inputPath] = this.inputPaths;
 
     // Check for changes in the files included in the dependency graph
     if (this._depGraph) {
-      var incomingDepGraphTree = this._getFSTree(this._depGraph);
-      var depGraphPatch = this._depGraphTree.calculatePatch(incomingDepGraphTree);
-      var hasDepGraphChanges = depGraphPatch.length !== 0;
+      let incomingDepGraphTree = this._getFSTree(this._depGraph);
+      let depGraphPatch = this._depGraphTree.calculatePatch(incomingDepGraphTree);
+      let hasDepGraphChanges = depGraphPatch.length !== 0;
 
       if (!hasDepGraphChanges) {
-        var incomingNonDepGraphTree = this._getFSTree(this._nonDepGraph);
-        var nonDepGraphPatch = this._nonDepGraphTree.calculatePatch(incomingNonDepGraphTree);
-        var hasNonDepGraphChanges = nonDepGraphPatch.length !== 0;
+        let incomingNonDepGraphTree = this._getFSTree(this._nonDepGraph);
+        let nonDepGraphPatch = this._nonDepGraphTree.calculatePatch(incomingNonDepGraphTree);
+        let hasNonDepGraphChanges = nonDepGraphPatch.length !== 0;
 
         if (!hasNonDepGraphChanges) {
           return;
@@ -71,9 +71,9 @@ export default class BroccoliDependencyFunnel extends Plugin {
       }
     }
 
-    var modules = [];
+    let modules = [];
 
-    var entryExists = existsSync(path.join(inputPath, this.entry));
+    let entryExists = existsSync(path.join(inputPath, this.entry));
     if (!entryExists && this.options.include) {
       return;
     } else if (!entryExists && this.options.exclude) {
@@ -82,14 +82,14 @@ export default class BroccoliDependencyFunnel extends Plugin {
       return;
     }
 
-    var rollupOptions = {
+    let rollupOptions = {
       entry: this.entry,
       external: this.external || [],
       dest: 'foo.js',
       plugins: [
         {
           resolveId: function(importee, importer) {
-            var moduleName;
+            let moduleName;
 
             // This will only ever be the entry point.
             if (!importer) {
@@ -100,7 +100,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
             // Link in the global paths.
             moduleName = amdNameResolver(importee, importer).replace(inputPath, '').replace(/^\//, '');
-            var modulePath = path.join(inputPath, moduleName + '.js');
+            let modulePath = path.join(inputPath, moduleName + '.js');
             if (existsSync(modulePath)) {
               modules.push(moduleName + '.js');
               return modulePath;
@@ -110,8 +110,8 @@ export default class BroccoliDependencyFunnel extends Plugin {
       ]
     };
 
-    return rollup(rollupOptions).then(function() {
-      var toCopy;
+    return rollup(rollupOptions).then(() => {
+      let toCopy;
 
       this._depGraph = modules.sort();
       this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
@@ -134,7 +134,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
       this._nonDepGraphTree = this._getFSTree(this._nonDepGraph);
 
       return;
-    }.bind(this));
+    });
   }
 
   copy(inodes) {
@@ -154,10 +154,10 @@ export default class BroccoliDependencyFunnel extends Plugin {
    * @return {FSTree}
    */
   _getFSTree(paths) {
-    var inputPath = this.inputPaths[0];
-    var entries = paths.map(function(entryPath) {
-      var absolutePath = path.join(inputPath, entryPath);
-      var stat = existsStat(absolutePath);
+    let [inputPath] = this.inputPaths;
+    let entries = paths.map((entryPath) => {
+      let absolutePath = path.join(inputPath, entryPath);
+      let stat = existsStat(absolutePath);
 
       if (!stat) {
         return;
