@@ -91,6 +91,36 @@ describe('BroccoliDependencyFunnel', function() {
       const output = walkSync(directory);
       expect(output).to.deep.equal([ 'engine.js', 'utils/', 'utils/herp.js' ]);
     });
+
+    it('returns an empty tree when entry does not exist and using include', async function() {
+      node = new BroccoliDependencyFunnel(input, {
+        include: true,
+        entry: 'does-not-exist.js',
+        external: [ 'ember-engines/routes' ]
+      });
+
+      pipeline = new broccoli.Builder(node);
+
+      const { directory } = await pipeline.build();
+
+      const output = walkSync(directory);
+      expect(output).to.deep.equal([]);
+    });
+
+    it('returns the input tree when entry does not exist and using exclude', async function() {
+      node = new BroccoliDependencyFunnel(input, {
+        exclude: true,
+        entry: 'does-not-exist.js',
+        external: [ 'ember-engines/routes' ]
+      });
+
+      pipeline = new broccoli.Builder(node);
+
+      const { directory } = await pipeline.build();
+
+      const output = walkSync(directory);
+      expect(output).to.deep.equal(walkSync(input));
+    });
   });
 
   describe('rebuild', function() {

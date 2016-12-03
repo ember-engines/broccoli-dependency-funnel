@@ -75,11 +75,13 @@ export default class BroccoliDependencyFunnel extends Plugin {
     let modules = [];
 
     let entryExists = existsSync(path.join(inputPath, this.entry));
-    if (!entryExists && this.include) {
+    if (!entryExists) {
       logger.debug('entry did not exist');
 
       if (!this.include) {
         logger.debug('copying all modules');
+
+        // TODO: We should just symlink to the inputPath to the outputPath
         modules = fs.readdirSync(inputPath);
         this.copy(modules);
       }
