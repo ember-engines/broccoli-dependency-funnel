@@ -14,7 +14,7 @@ import copyFile from './utils/copy-file';
 import existsStat from './utils/exists-stat';
 import filterDirectory from './utils/filter-directory';
 
-const logger = _logger('broccoli-dependency-funnel'); // eslint-disable-line no-unused-vars
+const logger = _logger('broccoli-dependency-funnel');
 
 export default class BroccoliDependencyFunnel extends Plugin {
   constructor(node, options = {}) {
@@ -59,12 +59,13 @@ export default class BroccoliDependencyFunnel extends Plugin {
         let hasNonDepGraphChanges = nonDepGraphPatch.length !== 0;
 
         if (!hasNonDepGraphChanges) {
+          logger.debug('cache hit, no changes');
           return;
-        }
-
-        if (this.include) {
+        } else if (this.include) {
+          logger.debug('cache hit, no changes in dependency graph');
           return;
         } else {
+          logger.debug('applying patch', nonDepGraphPatch);
           FSTree.applyPatch(inputPath, this.outputPath, nonDepGraphPatch);
           return;
         }
@@ -74,8 +75,13 @@ export default class BroccoliDependencyFunnel extends Plugin {
     let modules = [];
 
     let entryExists = existsSync(path.join(inputPath, this.entry));
-    if (!entryExists && this.include) {
+    if (!entryExists) {
+      logger.debug('entry did not exist');
+
       if (!this.include) {
+        logger.debug('copying all modules');
+
+        // TODO: We should just symlink to the inputPath to the outputPath
         modules = fs.readdirSync(inputPath);
         this.copy(modules);
       }
@@ -112,6 +118,8 @@ export default class BroccoliDependencyFunnel extends Plugin {
     };
 
     return rollup(rollupOptions).then(() => {
+      logger.debug('rollup executed');
+
       this._depGraph = modules.sort();
       this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
         return modules.indexOf(module) === -1;
