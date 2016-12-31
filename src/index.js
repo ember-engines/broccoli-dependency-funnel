@@ -4,7 +4,7 @@ import Plugin from 'broccoli-plugin';
 import FSTree from 'fs-tree-diff';
 import Entry from 'fs-tree-diff/lib/entry';
 import existsSync from 'exists-sync';
-import heimdall from 'heimdalljs'; // eslint-disable-line no-unused-vars
+import heimdall from 'heimdalljs';
 import { default as _logger } from 'heimdalljs-logger';
 import rimraf from 'rimraf';
 import { rollup } from 'rollup';
@@ -15,6 +15,14 @@ import existsStat from './utils/exists-stat';
 import filterDirectory from './utils/filter-directory';
 
 const logger = _logger('broccoli-dependency-funnel');
+
+function BroccoliDependencyFunnelSchema() {
+  this.cacheHit = 0;
+  this.patchApplied = 0;
+  this.noEntry = 0;
+  this.copyAll = 0;
+  this.rollup = 0;
+}
 
 export default class BroccoliDependencyFunnel extends Plugin {
   constructor(node, options = {}) {
@@ -46,8 +54,10 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
   build() {
     let node = heimdall.start({
-      name: 'BroccoliDependencyFunnel (Build)'
-    });
+      name: 'BroccoliDependencyFunnel (Build)',
+      broccoliDependencyFunnel: true
+    }, BroccoliDependencyFunnelSchema);
+    let stats = node.stats;
     let [inputPath] = this.inputPaths;
 
     // Check for changes in the files included in the dependency graph
@@ -62,14 +72,17 @@ export default class BroccoliDependencyFunnel extends Plugin {
         let hasNonDepGraphChanges = nonDepGraphPatch.length !== 0;
 
         if (!hasNonDepGraphChanges) {
+          stats.cacheHit++;
           logger.debug('cache hit, no changes');
           node.stop();
           return;
         } else if (this.include) {
+          stats.cacheHit++;
           logger.debug('cache hit, no changes in dependency graph');
           node.stop();
           return;
         } else {
+          stats.patchApplied++;
           logger.debug('applying patch', nonDepGraphPatch);
           FSTree.applyPatch(inputPath, this.outputPath, nonDepGraphPatch);
           node.stop();
@@ -82,9 +95,11 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
     let entryExists = existsSync(path.join(inputPath, this.entry));
     if (!entryExists) {
+      stats.noEntry++;
       logger.debug('entry did not exist');
 
       if (!this.include) {
+        stats.copyAll++;
         logger.debug('copying all modules');
 
         // TODO: We should just symlink to the inputPath to the outputPath
@@ -128,6 +143,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
       name: 'BroccoliDependencyFunnel (Rollup)'
     });
     return rollup(rollupOptions).then(() => {
+      stats.rollup++;
       logger.debug('rollup executed');
 
       this._depGraph = modules.sort();
