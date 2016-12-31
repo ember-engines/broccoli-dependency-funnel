@@ -45,6 +45,9 @@ export default class BroccoliDependencyFunnel extends Plugin {
   }
 
   build() {
+    let node = heimdall.start({
+      name: 'BroccoliDependencyFunnel (Build)'
+    });
     let [inputPath] = this.inputPaths;
 
     // Check for changes in the files included in the dependency graph
@@ -60,13 +63,16 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
         if (!hasNonDepGraphChanges) {
           logger.debug('cache hit, no changes');
+          node.stop();
           return;
         } else if (this.include) {
           logger.debug('cache hit, no changes in dependency graph');
+          node.stop();
           return;
         } else {
           logger.debug('applying patch', nonDepGraphPatch);
           FSTree.applyPatch(inputPath, this.outputPath, nonDepGraphPatch);
+          node.stop();
           return;
         }
       }
@@ -86,6 +92,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
         this.copy(modules);
       }
 
+      node.stop();
       return;
     }
 
@@ -117,6 +124,9 @@ export default class BroccoliDependencyFunnel extends Plugin {
       ]
     };
 
+    let rollupNode = heimdall.start({
+      name: 'BroccoliDependencyFunnel (Rollup)'
+    });
     return rollup(rollupOptions).then(() => {
       logger.debug('rollup executed');
 
@@ -134,6 +144,8 @@ export default class BroccoliDependencyFunnel extends Plugin {
       this._depGraphTree = this._getFSTree(this._depGraph);
       this._nonDepGraphTree = this._getFSTree(this._nonDepGraph);
 
+      rollupNode.stop();
+      node.stop();
       return;
     });
   }
