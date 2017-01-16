@@ -7,9 +7,7 @@ import existsSync from 'exists-sync';
 import heimdall from 'heimdalljs';
 import { default as _logger } from 'heimdalljs-logger';
 import rimraf from 'rimraf';
-import { rollup } from 'rollup';
-import { moduleResolve as amdNameResolver } from 'amd-name-resolver';
-
+import mrDepWalk from 'mr-dep-walk';
 import copyFile from './utils/copy-file';
 import existsStat from './utils/exists-stat';
 import filterDirectory from './utils/filter-directory';
@@ -21,7 +19,7 @@ function BroccoliDependencyFunnelSchema() {
   this.patchApplied = 0;
   this.noEntry = 0;
   this.copyAll = 0;
-  this.rollup = 0;
+  this.mrDepWalk = 0;
 }
 
 export default class BroccoliDependencyFunnel extends Plugin {
@@ -111,59 +109,41 @@ export default class BroccoliDependencyFunnel extends Plugin {
       return;
     }
 
-    let rollupOptions = {
+    let options = {
       entry: this.entry,
       external: this.external || [],
-      dest: 'foo.js',
-      plugins: [
-        {
-          resolveId: function(importee, importer) {
-            let moduleName;
-
-            // This will only ever be the entry point.
-            if (!importer) {
-              moduleName = importee.replace(inputPath, '');
-              modules.push(moduleName);
-              return path.join(inputPath, importee);
-            }
-
-            // Link in the global paths.
-            moduleName = amdNameResolver(importee, importer).replace(inputPath, '').replace(/^\//, '');
-            let modulePath = path.join(inputPath, moduleName + '.js');
-            if (existsSync(modulePath)) {
-              modules.push(moduleName + '.js');
-              return modulePath;
-            }
-          }
-        }
-      ]
+      dest: 'foo.js'
     };
 
-    let rollupNode = heimdall.start({
-      name: 'BroccoliDependencyFunnel (Rollup)'
+    let mrDepWalkNode = heimdall.start({
+      name: 'BroccoliDependencyFunnel (Mr Dep Walk)'
     });
-    return rollup(rollupOptions).then(() => {
-      stats.rollup++;
-      logger.debug('rollup executed');
 
-      this._depGraph = modules.sort();
-      this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
-        return modules.indexOf(module) === -1;
-      }).sort();
+    modules = mrDepWalk.depFilesFromFile(this.inputPaths[0], options);
+    if (modules.indexOf(options.entry) === -1) {
+      modules.unshift(options.entry);
+    }
+    mrDepWalkNode.stop();
+    stats.mrDepWalk++;
+    logger.debug('Mr DepWalkexecuted');
 
-      rimraf.sync(this.outputPath);
+    this._depGraph = modules.sort();
+    this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
+      return modules.indexOf(module) === -1;
+    }).sort();
 
-      let toCopy = this.include ? this._depGraph : this._nonDepGraph;
+    rimraf.sync(this.outputPath);
 
-      this.copy(toCopy);
+    let toCopy = this.include ? this._depGraph : this._nonDepGraph;
 
-      this._depGraphTree = this._getFSTree(this._depGraph);
-      this._nonDepGraphTree = this._getFSTree(this._nonDepGraph);
+    // TODO: should be patch based
+    this.copy(toCopy);
 
-      rollupNode.stop();
-      node.stop();
-      return;
-    });
+    this._depGraphTree = this._getFSTree(this._depGraph);
+    this._nonDepGraphTree = this._getFSTree(this._nonDepGraph);
+
+    node.stop();
+    return;
   }
 
   copy(inodes) {
