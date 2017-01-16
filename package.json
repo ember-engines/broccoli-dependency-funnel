@@ -1,6 +1,6 @@
 {
   "name": "broccoli-dependency-funnel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Funnels a set of files included (or excluded) from a JS dependency graph",
   "main": "dist/index.js",
   "scripts": {
