@@ -109,23 +109,27 @@ export default class BroccoliDependencyFunnel extends Plugin {
       return;
     }
 
-    let options = {
-      entry: this.entry,
-      external: this.external || [],
-      dest: 'foo.js'
-    };
-
     let mrDepWalkNode = heimdall.start({
       name: 'BroccoliDependencyFunnel (Mr Dep Walk)'
     });
 
-    modules = mrDepWalk.depFilesFromFile(this.inputPaths[0], options);
-    if (modules.indexOf(options.entry) === -1) {
-      modules.unshift(options.entry);
+    modules = mrDepWalk.depFilesFromFile(this.inputPaths[0], {
+      entry: this.entry,
+      external: this.external || []
+    });
+
+    // Ensure `this.entry` is included in `modules`.
+    //
+    // `this.entry` will already be included if a member of its dependency
+    // graph depends back on it. If none of its dependencies depend on it, it
+    // will not be included.
+    //
+    if (modules.indexOf(this.entry) === -1) {
+      modules.unshift(this.entry);
     }
     mrDepWalkNode.stop();
     stats.mrDepWalk++;
-    logger.debug('Mr DepWalkexecuted');
+    logger.debug('Mr DepWalk executed');
 
     this._depGraph = modules.sort();
     this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
@@ -143,7 +147,6 @@ export default class BroccoliDependencyFunnel extends Plugin {
     this._nonDepGraphTree = this._getFSTree(this._nonDepGraph);
 
     node.stop();
-    return;
   }
 
   copy(inodes) {
