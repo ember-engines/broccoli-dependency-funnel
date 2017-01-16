@@ -297,5 +297,5 @@ describe('BroccoliDependencyFunnel', function() {
         expect(output).to.deep.equal([ 'engine.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
       });
     });
-  })
+  });
 });
