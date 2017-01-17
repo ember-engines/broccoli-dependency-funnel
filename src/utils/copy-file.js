@@ -16,6 +16,12 @@ export default function copyFile(sourcePath, destPath) {
   try {
     symlinkOrCopy.sync(sourcePath, destPath);
   } catch(e) {
+    // TODO: change mr-dep-walk API to expose found vs missing (aka external) deps
+    // if sourcePath does not exist, do nothing
+    if (!existsSync(sourcePath)) {
+      return;
+    }
+
     // If it failed, make sure the directory exists
     if (!existsSync(destDir)) {
       mkdirp.sync(destDir);
