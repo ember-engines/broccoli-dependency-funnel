@@ -41,7 +41,11 @@ describe('BroccoliDependencyFunnel', function() {
   let node, pipeline;
   const FIXTURES = [
     {
-      'routes.js': 'import buildRoutes from "ember-engines/routes";import foo from "utils/foo";',
+      'routes.js': `
+        import buildRoutes from "ember-engines/routes";
+        import foo from "utils/foo";
+        import bar from "some-external/thing";
+      `,
       'utils': {
         'foo.js': 'import derp from "./derp";export default {};',
         'derp.js': 'export default {};',
@@ -51,7 +55,7 @@ describe('BroccoliDependencyFunnel', function() {
     },
 
     {
-      'routes.js': `define('routes', ["ember-engines/routes", "utils/foo" ], function() { });`,
+      'routes.js': `define('routes', ["ember-engines/routes", "utils/foo", "some-external/thing" ], function() { });`,
       'utils': {
         'foo.js': `define('foo', ['./derp'], function() { });`,
         'derp.js': `define('derp', [], function() { });`,
@@ -85,7 +89,7 @@ describe('BroccoliDependencyFunnel', function() {
         const { directory } = await pipeline.build();
 
         const output = walkSync(directory);
-        expect(output).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
+        expect(output).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js']);
       });
 
       it('returns a tree excluding the dependency graph when using exclude', async function() {
