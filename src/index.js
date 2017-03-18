@@ -91,7 +91,18 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
     let modules = [];
 
-    let entryExists = existsSync(path.join(inputPath, this.entry));
+    let actualEntry = this.entry;
+    let entryExists = existsSync(path.join(inputPath, actualEntry));
+    let usingModulesDir = false;
+
+    // Ember-CLI might have all the modules inside a 'modules/' sub directory
+    // so we check that as well
+    if (!entryExists) {
+      actualEntry = path.join('modules', this.entry);
+      entryExists = existsSync(path.join(inputPath, actualEntry));
+      usingModulesDir = true;
+    }
+
     if (!entryExists) {
       stats.noEntry++;
       logger.debug('entry did not exist');
@@ -113,9 +124,10 @@ export default class BroccoliDependencyFunnel extends Plugin {
       name: 'BroccoliDependencyFunnel (Mr Dep Walk)'
     });
 
-    modules = mrDepWalk.depFilesFromFile(this.inputPaths[0], {
+    modules = mrDepWalk.depFilesFromFile(inputPath, {
       entry: this.entry,
-      external: this.external || []
+      external: this.external || [],
+      cwd: usingModulesDir ? 'modules' : ''
     });
 
     // Ensure `this.entry` is included in `modules`.
@@ -124,8 +136,8 @@ export default class BroccoliDependencyFunnel extends Plugin {
     // graph depends back on it. If none of its dependencies depend on it, it
     // will not be included.
     //
-    if (modules.indexOf(this.entry) === -1) {
-      modules.unshift(this.entry);
+    if (modules.indexOf(actualEntry) === -1) {
+      modules.unshift(actualEntry);
     }
     mrDepWalkNode.stop();
     stats.mrDepWalk++;

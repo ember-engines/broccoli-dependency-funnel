@@ -68,6 +68,26 @@ describe('BroccoliDependencyFunnel', function() {
         },
         'engine.js': `define('engine', ['./utils/herp'], function() { });`
       }
+    },
+
+    {
+      title: 'Modules',
+      usingModulesDir: true,
+      data: {
+        'modules': {
+          'routes.js': `
+            import buildRoutes from "ember-engines/routes";
+            import foo from "utils/foo";
+            import bar from "some-external/thing";
+          `,
+          'utils': {
+            'foo.js': 'import derp from "./derp";export default {};',
+            'derp.js': 'export default {};',
+            'herp.js': 'export default {};'
+          },
+          'engine.js': 'import herp from "./utils/herp";'
+        }
+      }
     }
   ];
 
@@ -93,7 +113,11 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          const { directory } = await pipeline.build();
+          let { directory } = await pipeline.build();
+
+          if (FIXTURE.usingModulesDir) {
+            directory = path.join(directory, 'modules');
+          }
 
           const output = walkSync(directory);
           expect(output).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js']);
@@ -108,7 +132,11 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          const { directory } = await pipeline.build();
+          let { directory } = await pipeline.build();
+
+          if (FIXTURE.usingModulesDir) {
+            directory = path.join(directory, 'modules');
+          }
 
           const output = walkSync(directory);
           expect(output).to.deep.equal([ 'engine.js', 'utils/', 'utils/herp.js' ]);
@@ -217,7 +245,11 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          const { directory } = await pipeline.build();
+          let { directory } = await pipeline.build();
+
+          if (FIXTURE.usingModulesDir) {
+            directory = path.join(directory, 'modules');
+          }
 
           const beforeStat = fs.statSync(directory);
 
@@ -226,7 +258,8 @@ describe('BroccoliDependencyFunnel', function() {
 
           await fsTick();
 
-          fixture.writeSync(input, {
+          let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
+          fixture.writeSync(updateLocation, {
             'routes.js': 'import herp from "utils/herp";'
           });
 
@@ -247,14 +280,19 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          const { directory } = await pipeline.build();
+          let { directory } = await pipeline.build();
+
+          if (FIXTURE.usingModulesDir) {
+            directory = path.join(directory, 'modules');
+          }
 
           const engineStat = fs.statSync(directory + '/engine.js');
           const routesStat = fs.statSync(directory + '/utils/herp.js');
 
           await fsTick();
 
-          fixture.writeSync(input, {
+          let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
+          fixture.writeSync(updateLocation, {
             'engine.js': ''
           });
 
@@ -268,7 +306,7 @@ describe('BroccoliDependencyFunnel', function() {
 
           await fsTick();
 
-          fs.unlink(path.join(input, 'engine.js'));
+          fs.unlink(path.join(updateLocation, 'engine.js'));
 
           await pipeline.build();
 
@@ -286,7 +324,11 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          const { directory } = await pipeline.build();
+          let { directory } = await pipeline.build();
+
+          if (FIXTURE.usingModulesDir) {
+            directory = path.join(directory, 'modules');
+          }
 
           const buildStat = fs.statSync(directory);
 
@@ -295,7 +337,8 @@ describe('BroccoliDependencyFunnel', function() {
 
           await fsTick();
 
-          fixture.writeSync(input, {
+          let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
+          fixture.writeSync(updateLocation, {
             'routes.js': 'import herp from "utils/herp";'
           });
 

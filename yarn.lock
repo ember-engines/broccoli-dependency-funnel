@@ -1178,6 +1178,13 @@ fs-extra@^0.30.0:
     path-is-absolute "^1.0.0"
     rimraf "^2.2.8"
 
+fs-extra@^2.0.0:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-2.1.2.tgz#046c70163cef9aad46b0e4a7fa467fb22d71de35"
+  dependencies:
+    graceful-fs "^4.1.2"
+    jsonfile "^2.1.0"
+
 fs-readdir-recursive@^0.1.0:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/fs-readdir-recursive/-/fs-readdir-recursive-0.1.2.tgz#315b4fb8c1ca5b8c47defef319d073dad3568059"
@@ -1868,12 +1875,13 @@ mocha@^2.5.3:
     supports-color "1.2.0"
     to-iso-string "0.0.2"
 
-mr-dep-walk@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/mr-dep-walk/-/mr-dep-walk-1.1.1.tgz#7117ab4e737d2ac8e1768e406fc62ca04171986d"
+mr-dep-walk@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/mr-dep-walk/-/mr-dep-walk-1.2.0.tgz#80903dfa0a73715a65b7328fa57e070f13934962"
   dependencies:
     acorn "^4.0.4"
     amd-name-resolver "^0.0.6"
+    fs-extra "^2.0.0"
 
 ms@0.7.1:
   version "0.7.1"
