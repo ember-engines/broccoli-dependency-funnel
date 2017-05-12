@@ -306,7 +306,7 @@ describe('BroccoliDependencyFunnel', function() {
 
           await fsTick();
 
-          fs.unlink(path.join(updateLocation, 'engine.js'));
+          fs.unlinkSync(path.join(updateLocation, 'engine.js'));
 
           await pipeline.build();
 
