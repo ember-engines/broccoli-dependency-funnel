@@ -1,6 +1,7 @@
 # broccoli-dependency-funnel
 
 [![Build Status](https://travis-ci.org/ember-engines/broccoli-dependency-funnel.svg?branch=master)](https://travis-ci.org/ember-engines/broccoli-dependency-funnel)
+[![Build Status](https://ci.appveyor.com/api/projects/status/ilvo74csww13f3j3?svg=true)](https://ci.appveyor.com/project/embercli/broccoli-dependency-funnel)
 
 This [Broccoli](https://github.com/broccolijs/broccoli) plugin funnels a set of files included (or excluded) from a JS dependency graph.
 
