@@ -1,7 +1,8 @@
-# http://www.appveyor.com/docs/appveyor-yml
+# https://www.appveyor.com/docs/appveyor-yml/
 
 # Test against these versions of Node.js.
 environment:
+  MOCHA_REPORTER: "mocha-appveyor-reporter"
   matrix:
     - nodejs_version: "4"
     - nodejs_version: "6"
@@ -9,20 +10,19 @@ environment:
 
 # Install scripts. (runs after repo cloning)
 install:
-  - git rev-parse HEAD
-  # Get the latest stable version of Node 0.STABLE.latest
   - ps: Install-Product node $env:nodejs_version
-  # Typical npm stuff.
-  - md C:\nc
-  - npm config set cache C:\nc
-  - npm version
-  - npm install --no-optional
+  - appveyor-retry npm i -g npm@^3
+  - appveyor-retry yarn
+  - appveyor-retry yarn add mocha-appveyor-reporter # must be installed locally.
+
+cache:
+  - '%LOCALAPPDATA%\Yarn'
 
 # Post-install test scripts.
 test_script:
   # Output useful info for debugging.
-  - npm version
-  - cmd: npm test
+  - git rev-parse HEAD
+  - cmd: yarn run test
 
 # Don't actually build.
 build: off
