@@ -1,24 +1,24 @@
-import Promise from 'es6-promise'; // for regenerator
-import 'regenerator-runtime/runtime'; // only for tests, because async/await needs it
+'use strict';
 
-import BroccoliDependencyFunnel from '../';
-import broccoli from 'broccoli';
-import chai from 'chai';
-import chaiFiles from 'chai-files';
-import fixture from 'fixturify';
-import fs from 'fs-extra';
-import walkSync from 'walk-sync';
-import path from 'path';
+const BroccoliDependencyFunnel = require('../');
+const broccoli = require('broccoli');
+const chai = require('chai');
+const chaiFiles = require('chai-files');
+const fixture = require('fixturify');
+const fs = require('fs-extra');
+const walkSync = require('walk-sync');
+const path = require('path');
+const co = require('co');
 
-const { expect } = chai;
-const { file } = chaiFiles;
+const expect = chai.expect;
+const file = chaiFiles.file;
 
 chai.config.truncateThreshold = 1000;
 chai.use(chaiFiles);
 
 // Some filesystems dont have lower then 1s mtime resolution
-async function fsTick() {
-  return new Promise((resolve) => setTimeout(resolve, 1001));
+function fsTick() {
+  return new Promise(resolve => setTimeout(resolve, 1001));
 }
 
 // Helper to assert that two stats are equal, but only in the ways we care about.
@@ -104,7 +104,7 @@ describe('BroccoliDependencyFunnel', function() {
       });
 
       describe("build", function() {
-        it('returns a tree of the dependency graph when using include', async function() {
+        it('returns a tree of the dependency graph when using include', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             include: true,
             entry: 'routes.js',
@@ -113,17 +113,17 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          let { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          let directory = output.directory;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
           }
 
-          const output = walkSync(directory);
-          expect(output).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js']);
-        });
+          expect(walkSync(directory)).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js']);
+        }));
 
-        it('returns a tree excluding the dependency graph when using exclude', async function() {
+        it('returns a tree excluding the dependency graph when using exclude', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             exclude: true,
             entry: 'routes.js',
@@ -132,17 +132,17 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          let { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          let directory  = output.directory;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
           }
 
-          const output = walkSync(directory);
-          expect(output).to.deep.equal([ 'engine.js', 'utils/', 'utils/herp.js' ]);
-        });
+          expect(walkSync(directory)).to.deep.equal([ 'engine.js', 'utils/', 'utils/herp.js' ]);
+        }));
 
-        it('returns an empty tree when entry does not exist and using include', async function() {
+        it('returns an empty tree when entry does not exist and using include', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             include: true,
             entry: 'does-not-exist.js',
@@ -151,13 +151,13 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          const { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          const directory = output.directory;
 
-          const output = walkSync(directory);
-          expect(output).to.deep.equal([]);
-        });
+          expect(walkSync(directory)).to.deep.equal([]);
+        }));
 
-        it('returns the input tree when entry does not exist and using exclude', async function() {
+        it('returns the input tree when entry does not exist and using exclude', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             exclude: true,
             entry: 'does-not-exist.js',
@@ -166,15 +166,13 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          const { directory } = await pipeline.build();
-
-          const output = walkSync(directory);
-          expect(output).to.deep.equal(walkSync(input));
-        });
+          const output = yield pipeline.build();
+          expect(walkSync(output.directory)).to.deep.equal(walkSync(input));
+        }));
       });
 
       describe('rebuild', function() {
-        it('is stable on unchanged rebuild with include', async function() {
+        it('is stable on unchanged rebuild with include', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             include: true,
             entry: 'routes.js',
@@ -183,18 +181,19 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          const { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          const directory = output.directory;
 
           const beforeStat = fs.statSync(directory);
 
-          await fsTick();
-          await pipeline.build();
+          yield fsTick();
+          yield pipeline.build();
 
           const afterStat = fs.statSync(directory);
           assertStatEqual(beforeStat, afterStat);
-        });
+        }));
 
-        it('is stable on unchanged rebuild with exclude', async function() {
+        it('is stable on unchanged rebuild with exclude', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             exclude: true,
             entry: 'routes.js',
@@ -203,18 +202,19 @@ describe('BroccoliDependencyFunnel', function() {
 
           pipeline = new broccoli.Builder(node);
 
-          const { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          const directory = output.directory;
 
           const beforeStat = fs.statSync(directory);
 
-          await fsTick();
-          await pipeline.build();
+          yield fsTick();
+          yield pipeline.build();
 
           const afterStat = fs.statSync(directory);
           assertStatEqual(beforeStat, afterStat);
-        });
+        }));
 
-        it('is stable when changes occur outside dep graph and using include', async function() {
+        it('is stable when changes occur outside dep graph and using include', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             include: true,
             entry: 'routes.js',
@@ -222,22 +222,23 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          const { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          const directory = output.directory;
 
           const beforeStat = fs.statSync(directory);
-          await fsTick();
+          yield fsTick();
 
           fixture.writeSync(input, {
             'engine.js': ''
           });
 
-          await pipeline.build();
+          yield pipeline.build();
 
           const afterStat = fs.statSync(directory);
           assertStatEqual(beforeStat, afterStat, 'stable rebuild when modifying file NOT in dep graph');
-        });
+        }));
 
-        it('updates when changes occur in dep graph and using include', async function() {
+        it('updates when changes occur in dep graph and using include', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             include: true,
             entry: 'routes.js',
@@ -245,7 +246,8 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          let { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          let directory = output.directory;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -253,26 +255,24 @@ describe('BroccoliDependencyFunnel', function() {
 
           const beforeStat = fs.statSync(directory);
 
-          let output = walkSync(directory);
-          expect(output).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
+          expect(walkSync(directory)).to.deep.equal([ 'routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
 
-          await fsTick();
+          yield fsTick();
 
           let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
           fixture.writeSync(updateLocation, {
             'routes.js': 'import herp from "utils/herp";'
           });
 
-          await pipeline.build();
+          yield pipeline.build();
 
           const afterStat = fs.statSync(directory);
           assertStatChange(beforeStat, afterStat, 'instable rebuild when modifying file in dep graph');
 
-          output = walkSync(directory);
-          expect(output).to.deep.equal([ 'routes.js', 'utils/', 'utils/herp.js' ]);
-        });
+          expect(walkSync(directory)).to.deep.equal([ 'routes.js', 'utils/', 'utils/herp.js' ]);
+        }));
 
-        it('updates when changes occur outside dep graph and using exclude', async function() {
+        it('updates when changes occur outside dep graph and using exclude', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             exclude: true,
             entry: 'routes.js',
@@ -280,7 +280,9 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          let { directory } = await pipeline.build();
+
+          let output = yield pipeline.build();
+          let directory = output.directory;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -289,14 +291,14 @@ describe('BroccoliDependencyFunnel', function() {
           const engineStat = fs.statSync(directory + '/engine.js');
           const routesStat = fs.statSync(directory + '/utils/herp.js');
 
-          await fsTick();
+          yield fsTick();
 
           let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
           fixture.writeSync(updateLocation, {
             'engine.js': ''
           });
 
-          await pipeline.build();
+          yield pipeline.build();
 
           const engineRebuildStat = fs.statSync(directory + '/engine.js');
           assertStatChange(engineStat, engineRebuildStat, 'engine.js changed');
@@ -304,19 +306,19 @@ describe('BroccoliDependencyFunnel', function() {
           let routesRebuildStat = fs.statSync(directory + '/utils/herp.js');
           assertStatEqual(routesStat, routesRebuildStat, 'routes.js unchanged');
 
-          await fsTick();
+          yield fsTick();
 
           fs.unlinkSync(path.join(updateLocation, 'engine.js'));
 
-          await pipeline.build();
+          yield pipeline.build();
 
           expect(file(directory + '/engine.js')).to.not.exist;
 
           routesRebuildStat = fs.statSync(directory + '/utils/herp.js');
           assertStatEqual(routesStat, routesRebuildStat, 'routes.js unchanged second time');
-        });
+        }));
 
-        it('updates when changes occur in dep graph and using exclude', async function() {
+        it('updates when changes occur in dep graph and using exclude', co.wrap(function* () {
           node = new BroccoliDependencyFunnel(input, {
             exclude: true,
             entry: 'routes.js',
@@ -324,7 +326,8 @@ describe('BroccoliDependencyFunnel', function() {
           });
 
           pipeline = new broccoli.Builder(node);
-          let { directory } = await pipeline.build();
+          const output = yield pipeline.build();
+          let directory = output.directory;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -332,24 +335,22 @@ describe('BroccoliDependencyFunnel', function() {
 
           const buildStat = fs.statSync(directory);
 
-          let output = walkSync(directory);
-          expect(output).to.deep.equal([ 'engine.js', 'utils/', 'utils/herp.js' ]);
+          expect(walkSync(directory)).to.deep.equal([ 'engine.js', 'utils/', 'utils/herp.js' ]);
 
-          await fsTick();
+          yield fsTick();
 
           let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
           fixture.writeSync(updateLocation, {
             'routes.js': 'import herp from "utils/herp";'
           });
 
-          await pipeline.build();
+          yield pipeline.build();
 
           const rebuildStat = fs.statSync(directory);
           assertStatChange(rebuildStat, buildStat, 'instable rebuild when modifying file in dep graph');
 
-          output = walkSync(directory);
-          expect(output).to.deep.equal([ 'engine.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
-        });
+          expect(walkSync(directory)).to.deep.equal([ 'engine.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
+        }));
       });
     });
   });

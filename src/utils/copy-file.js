@@ -1,8 +1,10 @@
-import fs from 'fs';
-import path from 'path';
-import mkdirp from 'mkdirp';
-import existsSync from 'exists-sync';
-import symlinkOrCopy from 'symlink-or-copy';
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const mkdirp = require('mkdirp');
+const existsSync = require('exists-sync');
+const symlinkOrCopy = require('symlink-or-copy');
 
 /**
  * Copies an input path to an output path by using the _copy
@@ -10,8 +12,8 @@ import symlinkOrCopy from 'symlink-or-copy';
  * @param {Plugin} context
  * @return {Void}
  */
-export default function copyFile(sourcePath, destPath) {
-  const destDir = path.dirname(destPath);
+module.exports = function copyFile(sourcePath, destPath) {
+  let destDir = path.dirname(destPath);
 
   try {
     symlinkOrCopy.sync(sourcePath, destPath);
@@ -36,4 +38,4 @@ export default function copyFile(sourcePath, destPath) {
 
     symlinkOrCopy.sync(sourcePath, destPath);
   }
-}
+};

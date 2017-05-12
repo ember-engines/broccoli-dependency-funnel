@@ -1,16 +1,18 @@
-import fs from 'fs';
-import path from 'path-posix';
-import Plugin from 'broccoli-plugin';
-import FSTree from 'fs-tree-diff';
-import Entry from 'fs-tree-diff/lib/entry';
-import existsSync from 'exists-sync';
-import heimdall from 'heimdalljs';
-import { default as _logger } from 'heimdalljs-logger';
-import rimraf from 'rimraf';
-import mrDepWalk from 'mr-dep-walk';
-import copyFile from './utils/copy-file';
-import existsStat from './utils/exists-stat';
-import filterDirectory from './utils/filter-directory';
+'use strict';
+
+const fs = require('fs');
+const path = require('path-posix');
+const Plugin = require('broccoli-plugin');
+const FSTree = require('fs-tree-diff');
+const Entry = require('fs-tree-diff/lib/entry');
+const existsSync = require('exists-sync');
+const heimdall = require('heimdalljs');
+const _logger = require('heimdalljs-logger');
+const rimraf = require('rimraf');
+const mrDepWalk = require('mr-dep-walk');
+const copyFile = require('./utils/copy-file');
+const existsStat = require('./utils/exists-stat');
+const filterDirectory = require('./utils/filter-directory');
 
 const logger = _logger('broccoli-dependency-funnel');
 
@@ -22,8 +24,9 @@ function BroccoliDependencyFunnelSchema() {
   this.mrDepWalk = 0;
 }
 
-export default class BroccoliDependencyFunnel extends Plugin {
-  constructor(node, options = {}) {
+module.exports = class BroccoliDependencyFunnel extends Plugin {
+  constructor(node, _options) {
+    let options = _options || {};
     super([node], {
       name: options.name,
       annotation: options.annotation,
@@ -56,7 +59,7 @@ export default class BroccoliDependencyFunnel extends Plugin {
       broccoliDependencyFunnel: true
     }, BroccoliDependencyFunnelSchema);
     let stats = node.stats;
-    let [inputPath] = this.inputPaths;
+    let inputPath = this.inputPaths[0];
 
     // Check for changes in the files included in the dependency graph
     if (this._depGraph) {
@@ -162,11 +165,11 @@ export default class BroccoliDependencyFunnel extends Plugin {
   }
 
   copy(inodes) {
-    const inputPath = this.inputPaths[0];
-    const outputPath = this.outputPath;
+    let inputPath = this.inputPaths[0];
+    let outputPath = this.outputPath;
 
     for (let i = 0; i < inodes.length; i++) {
-      const module = inodes[i];
+      let module = inodes[i];
       copyFile(path.join(inputPath, module), path.join(outputPath, module));
     }
   }
@@ -178,12 +181,12 @@ export default class BroccoliDependencyFunnel extends Plugin {
    * @return {FSTree}
    */
   _getFSTree(paths) {
-    let [inputPath] = this.inputPaths;
-    let entries = paths.map((entryPath) => {
+    let inputPath = this.inputPaths[0];
+    let entries = paths.map(entryPath => {
       let absolutePath = path.join(inputPath, entryPath);
       let stat = existsStat(absolutePath);
 
-      if (!stat) {
+      if (stat === null) {
         return;
       }
 
@@ -192,4 +195,4 @@ export default class BroccoliDependencyFunnel extends Plugin {
 
     return FSTree.fromEntries(entries);
   }
-}
+};

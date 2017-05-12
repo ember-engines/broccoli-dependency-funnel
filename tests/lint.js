@@ -1,8 +1,8 @@
-import lint from 'mocha-eslint';
+'use strict';
 
-const paths = [
+const lint  = require('mocha-eslint');
+
+lint([
   'src/**/*.js',
   'tests/**/*.js'
-];
-
-lint(paths);
+]);

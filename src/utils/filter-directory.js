@@ -1,5 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Filter the files in a directory that match a given predicate.
@@ -9,22 +11,22 @@ import path from 'path';
  * @param {Function} predicate
  * @return {Array<String>}
  */
-export default function filterDirectory(directory, prefix, predicate) {
-  const inodes = fs.readdirSync(directory);
-  const files = [];
+module.exports = function filterDirectory(directory, prefix, predicate) {
+  let inodes = fs.readdirSync(directory);
+  let files = [];
 
   for (let i = 0; i < inodes.length; i++) {
-    const inode = inodes[i];
-    const fullPath = path.join(directory, inode);
-    const currentPath = path.join(prefix, inode);
-    const isDirectory = fs.statSync(fullPath).isDirectory();
+    let inode = inodes[i];
+    let fullPath = path.join(directory, inode);
+    let currentPath = path.join(prefix, inode);
+    let isDirectory = fs.statSync(fullPath).isDirectory();
 
     if (isDirectory) {
-      files.push(...filterDirectory(fullPath, currentPath, predicate));
+      files.push.apply(files, filterDirectory(fullPath, currentPath, predicate));
     } else if (predicate(currentPath)) {
       files.push(currentPath);
     }
   }
 
   return files;
-}
+};
