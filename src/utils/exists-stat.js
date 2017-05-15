@@ -1,5 +1,6 @@
-import fs from 'fs';
+'use strict';
 
+const fs = require('fs');
 /**
  * Stats a path. If it exists, it returns the stat information. Otherwise it
  * returns null.
@@ -7,10 +8,9 @@ import fs from 'fs';
  * @param {String} path
  * @return {fs.Stats}
  */
-export default function existsStat(path) {
+module.exports = function existsStat(path) {
   try {
-    const stat = fs.statSync(path);
-    return stat;
+    return fs.statSync(path);
   } catch (e) {
     return null;
   }

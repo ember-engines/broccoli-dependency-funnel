@@ -7,5 +7,8 @@
   "extends": "eslint:recommended",
   "env": {
     "node": true
+  },
+  "globals": {
+    "Promise": true
   }
 }
