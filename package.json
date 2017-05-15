@@ -31,8 +31,7 @@
   },
   "homepage": "https://github.com/ember-engines/broccoli-dependency-funnel#readme",
   "files": [
-    "dist/",
-    "!dist/tests"
+    "src"
   ],
   "devDependencies": {
     "broccoli": "^0.16.9",
