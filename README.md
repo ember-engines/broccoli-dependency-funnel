@@ -36,10 +36,6 @@ module.exports = new DependencyFunnel(input, {
 * `cd broccoli-dependency-funnel`
 * `npm install`
 
-### Building
-
-* `npm run build`
-
 ### Testing
 
 * `npm run test` or `npm run test:debug`

@@ -5,9 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "mocha tests --reporter tap",
-    "test:lint": " mocha tests/lint.js",
-    "test:debug": "build && mocha debug tests",
-    "test:watch": "testem"
+    "test:debug": "mocha debug tests"
   },
   "engines": {
     "node": ">= 6.0.0"
