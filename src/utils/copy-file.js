@@ -3,7 +3,6 @@
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
-const existsSync = require('exists-sync');
 const symlinkOrCopy = require('symlink-or-copy');
 
 /**
@@ -20,12 +19,12 @@ module.exports = function copyFile(sourcePath, destPath) {
   } catch(e) {
     // TODO: change mr-dep-walk API to expose found vs missing (aka external) deps
     // if sourcePath does not exist, do nothing
-    if (!existsSync(sourcePath)) {
+    if (!fs.existsSync(sourcePath)) {
       return;
     }
 
     // If it failed, make sure the directory exists
-    if (!existsSync(destDir)) {
+    if (!fs.existsSync(destDir)) {
       mkdirp.sync(destDir);
     }
 

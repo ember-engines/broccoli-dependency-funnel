@@ -5,7 +5,6 @@ const path = require('path-posix');
 const Plugin = require('broccoli-plugin');
 const FSTree = require('fs-tree-diff');
 const Entry = require('fs-tree-diff/lib/entry');
-const existsSync = require('exists-sync');
 const heimdall = require('heimdalljs');
 const _logger = require('heimdalljs-logger');
 const rimraf = require('rimraf');
@@ -95,14 +94,14 @@ module.exports = class BroccoliDependencyFunnel extends Plugin {
     let modules = [];
 
     let actualEntry = this.entry;
-    let entryExists = existsSync(path.join(inputPath, actualEntry));
+    let entryExists = fs.existsSync(path.join(inputPath, actualEntry));
     let usingModulesDir = false;
 
     // Ember-CLI might have all the modules inside a 'modules/' sub directory
     // so we check that as well
     if (!entryExists) {
       actualEntry = path.join('modules', this.entry);
-      entryExists = existsSync(path.join(inputPath, actualEntry));
+      entryExists = fs.existsSync(path.join(inputPath, actualEntry));
       usingModulesDir = true;
     }
 
