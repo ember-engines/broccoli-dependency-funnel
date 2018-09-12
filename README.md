@@ -5,7 +5,7 @@
 
 This [Broccoli](https://github.com/broccolijs/broccoli) plugin funnels a set of files included (or excluded) from a JS dependency graph.
 
-In other words, you specify an ES6 module as an entry point and the plugin will walk its import graph and only copy-forward the files included in the graph. Alternatively, you can copy foward all files except those in the graph.
+In other words, you specify an ES6 module as an entry point and the plugin will walk its import graph and only copy-forward the files included in the graph. Alternatively, you can copy forward all files except those in the graph.
 
 ## Usage
 
