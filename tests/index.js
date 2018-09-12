@@ -1,16 +1,18 @@
 'use strict';
 
 const BroccoliDependencyFunnel = require('../');
-const broccoli = require('broccoli');
 const chai = require('chai');
 const chaiFiles = require('chai-files');
-const fixture = require('fixturify');
 const fs = require('fs-extra');
 const walkSync = require('walk-sync');
 const path = require('path');
 const co = require('co');
 
-const expect = chai.expect;
+const helper = require("broccoli-test-helper");
+const expect = require("chai").expect;
+const createBuilder = helper.createBuilder;
+const createTempDir = helper.createTempDir;
+
 const file = chaiFiles.file;
 
 chai.config.truncateThreshold = 1000;
@@ -20,9 +22,7 @@ chai.use(chaiFiles);
 function fsTick() {
   return new Promise(resolve => setTimeout(resolve, 1001));
 }
-
-// Helper to assert that two stats are equal, but only in the ways we care about.
-// Helpful because atime is finicky.
+// Helper to assert that two stats are equal, but only in the ways we care about. Helpful because atime is finicky.
 function assertStatEqual(a, b) {
   expect(a.mtime.toString()).to.equal(b.mtime.toString());
   expect(a.mode).to.equal(b.mode);
@@ -37,8 +37,6 @@ function assertStatChange(a, b) {
 describe('BroccoliDependencyFunnel', function() {
   this.timeout(5000);
 
-  const input = 'tmp/fixture-input';
-  let node, pipeline;
   const FIXTURES = [
     {
       title: 'ES6',
@@ -93,28 +91,31 @@ describe('BroccoliDependencyFunnel', function() {
 
   FIXTURES.forEach(FIXTURE => {
     describe(FIXTURE.title, function() {
-      beforeEach(function() {
-        fs.mkdirpSync(input);
-        fixture.writeSync(input, FIXTURE.data);
-      });
+      let input, output;
+
+      beforeEach(co.wrap(function* () {
+        input = yield createTempDir();
+        input.write(FIXTURE.data);
+      }));
 
       afterEach(function() {
-        fs.removeSync(input);
-        return pipeline.cleanup();
+        input.dispose();
+        output.dispose();
       });
 
       describe("build", function() {
         it('returns a tree of the dependency graph when using include', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             include: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
 
-          const output = yield pipeline.build();
-          let directory = output.directory;
+          yield output.build();
+
+          let directory = output.dir;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -124,16 +125,17 @@ describe('BroccoliDependencyFunnel', function() {
         }));
 
         it('returns a tree excluding the dependency graph when using exclude', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             exclude: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
 
-          const output = yield pipeline.build();
-          let directory  = output.directory;
+          yield output.build();
+
+          let directory = output.dir;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -143,111 +145,107 @@ describe('BroccoliDependencyFunnel', function() {
         }));
 
         it('returns an empty tree when entry does not exist and using include', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             include: true,
             entry: 'does-not-exist.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
 
-          const output = yield pipeline.build();
-          const directory = output.directory;
+          yield output.build();
 
-          expect(walkSync(directory)).to.deep.equal([]);
+          expect(output.readDir()).to.deep.equal([]);
         }));
 
         it('returns the input tree when entry does not exist and using exclude', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             exclude: true,
             entry: 'does-not-exist.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
 
-          const output = yield pipeline.build();
-          expect(walkSync(output.directory)).to.deep.equal(walkSync(input));
+          yield output.build();
+
+          expect(output.readDir()).to.deep.equal(walkSync(input.path()));
         }));
       });
 
       describe('rebuild', function() {
         it('is stable on unchanged rebuild with include', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             include: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
+          yield output.build();
 
-          const output = yield pipeline.build();
-          const directory = output.directory;
-
-          const beforeStat = fs.statSync(directory);
+          const beforeStat = fs.statSync(output.dir);
 
           yield fsTick();
-          yield pipeline.build();
+          yield output.build();
 
-          const afterStat = fs.statSync(directory);
+          const afterStat = fs.statSync(output.dir);
           assertStatEqual(beforeStat, afterStat);
         }));
 
         it('is stable on unchanged rebuild with exclude', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             exclude: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
+          yield output.build();
 
-          const output = yield pipeline.build();
-          const directory = output.directory;
-
-          const beforeStat = fs.statSync(directory);
+          const beforeStat = fs.statSync(output.dir);
 
           yield fsTick();
-          yield pipeline.build();
+          yield output.build();
 
-          const afterStat = fs.statSync(directory);
+          const afterStat = fs.statSync(output.dir);
           assertStatEqual(beforeStat, afterStat);
         }));
 
         it('is stable when changes occur outside dep graph and using include', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             include: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
-          const output = yield pipeline.build();
-          const directory = output.directory;
+          output = createBuilder(subject);
+          yield output.build();
 
-          const beforeStat = fs.statSync(directory);
+          const beforeStat = fs.statSync(output.dir);
           yield fsTick();
 
-          fixture.writeSync(input, {
+          input.write({
             'engine.js': ''
           });
 
-          yield pipeline.build();
+          yield output.build();
 
-          const afterStat = fs.statSync(directory);
+          const afterStat = fs.statSync(output.dir);
           assertStatEqual(beforeStat, afterStat, 'stable rebuild when modifying file NOT in dep graph');
         }));
 
         it('updates when changes occur in dep graph and using include', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             include: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
-          const output = yield pipeline.build();
-          let directory = output.directory;
+          output = createBuilder(subject);
+
+          yield output.build();
+          let directory = output.dir;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -259,12 +257,20 @@ describe('BroccoliDependencyFunnel', function() {
 
           yield fsTick();
 
-          let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
-          fixture.writeSync(updateLocation, {
-            'routes.js': 'import herp from "utils/herp";'
-          });
+          if (FIXTURE.usingModulesDir) {
+            input.write({
+              'modules': {
+                'routes.js': 'import herp from "utils/herp";'
+              }
+            });
 
-          yield pipeline.build();
+          } else {
+            input.write({
+              'routes.js': 'import herp from "utils/herp";'
+            });
+          }
+
+          yield output.build();
 
           const afterStat = fs.statSync(directory);
           assertStatChange(beforeStat, afterStat, 'instable rebuild when modifying file in dep graph');
@@ -273,16 +279,16 @@ describe('BroccoliDependencyFunnel', function() {
         }));
 
         it('updates when changes occur outside dep graph and using exclude', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             exclude: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
 
-          pipeline = new broccoli.Builder(node);
+          output = createBuilder(subject);
 
-          let output = yield pipeline.build();
-          let directory = output.directory;
+          yield output.build();
+          let directory = output.dir;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -293,12 +299,22 @@ describe('BroccoliDependencyFunnel', function() {
 
           yield fsTick();
 
-          let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
-          fixture.writeSync(updateLocation, {
-            'engine.js': ''
-          });
+          let updateLocation;
+          if (FIXTURE.usingModulesDir) {
+            updateLocation = output.path() + '/modules';
+            input.write({
+              'modules': {
+                'engine.js': ''
+              }
+            });
+          } else {
+            updateLocation = output.path();
+            input.write({
+              'engine.js': ''
+            });
+          }
 
-          yield pipeline.build();
+          yield output.build();
 
           const engineRebuildStat = fs.statSync(directory + '/engine.js');
           assertStatChange(engineStat, engineRebuildStat, 'engine.js changed');
@@ -310,7 +326,7 @@ describe('BroccoliDependencyFunnel', function() {
 
           fs.unlinkSync(path.join(updateLocation, 'engine.js'));
 
-          yield pipeline.build();
+          yield output.build();
 
           expect(file(directory + '/engine.js')).to.not.exist;
 
@@ -319,15 +335,16 @@ describe('BroccoliDependencyFunnel', function() {
         }));
 
         it('updates when changes occur in dep graph and using exclude', co.wrap(function* () {
-          node = new BroccoliDependencyFunnel(input, {
+          let subject = new BroccoliDependencyFunnel(input.path(), {
             exclude: true,
             entry: 'routes.js',
             external: [ 'ember-engines/routes' ]
           });
+          output = createBuilder(subject);
 
-          pipeline = new broccoli.Builder(node);
-          const output = yield pipeline.build();
-          let directory = output.directory;
+          yield output.build();
+
+          let directory = output.dir;
 
           if (FIXTURE.usingModulesDir) {
             directory = path.join(directory, 'modules');
@@ -339,12 +356,19 @@ describe('BroccoliDependencyFunnel', function() {
 
           yield fsTick();
 
-          let updateLocation = FIXTURE.usingModulesDir ? path.join(input, 'modules') : input;
-          fixture.writeSync(updateLocation, {
-            'routes.js': 'import herp from "utils/herp";'
-          });
+          if (FIXTURE.usingModulesDir) {
+            input.write({
+              'modules': {
+                'routes.js': 'import herp from "utils/herp";'
+              }
+            });
+          } else {
+            input.write({
+              'routes.js': 'import herp from "utils/herp";'
+            });
+          }
 
-          yield pipeline.build();
+          yield output.build();
 
           const rebuildStat = fs.statSync(directory);
           assertStatChange(rebuildStat, buildStat, 'instable rebuild when modifying file in dep graph');
