@@ -10,8 +10,8 @@ In other words, you specify an ES6 module as an entry point and the plugin will 
 ## Usage
 
 ```js
-var DependencyFunnel = require('broccoli-dependency-funnel');
-var input = 'src'; // Can be a directory or Broccoli plugin/node
+const DependencyFunnel = require('broccoli-dependency-funnel');
+const input = 'src'; // Can be a directory or Broccoli plugin/node
 
 module.exports = new DependencyFunnel(input, {
   include: true,
