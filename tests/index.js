@@ -375,6 +375,97 @@ describe('BroccoliDependencyFunnel', function() {
 
           expect(walkSync(directory)).to.deep.equal([ 'engine.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
         }));
+
+        it('correctly propogates add/removes when including files NOT in the dep graph', co.wrap(function* () {
+          let exclude = new BroccoliDependencyFunnel(input.path(), {
+            exclude: true,
+            entry: 'routes.js',
+            external: [ 'ember-engines/routes' ]
+          });
+
+          let include = new BroccoliDependencyFunnel(input.path(), {
+            include: true,
+            entry: 'routes.js',
+            external: [ 'ember-engines/routes' ]
+          });
+
+          let outExcluded = createBuilder(exclude);
+          let outIncluded = createBuilder(include);
+
+          output = {
+            dispose() {
+              outExcluded.dispose();
+              outIncluded.dispose();
+            }
+          };
+
+          yield outExcluded.build();
+          yield outIncluded.build();
+
+          if (FIXTURE.usingModulesDir) {
+            expect(outExcluded.readDir()).to.eql(['modules/', 'modules/engine.js', 'modules/utils/', 'modules/utils/herp.js']);
+            expect(outIncluded.readDir()).to.eql(['modules/','modules/routes.js', 'modules/utils/', 'modules/utils/derp.js', 'modules/utils/foo.js']);
+          } else {
+            expect(outExcluded.readDir()).to.eql(['engine.js', 'utils/', 'utils/herp.js']);
+            expect(outIncluded.readDir()).to.eql(['routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js']);
+          }
+
+          if (FIXTURE.usingModulesDir) {
+            input.write({
+              'modules': {
+                'utils': {
+                  'bar.js': '',
+                  'baz.js': ''
+                }
+              }
+            });
+          } else {
+            input.write({
+              'utils': {
+                'bar.js': '',
+                'baz.js': ''
+              }
+            });
+          }
+
+          yield outExcluded.build();
+          yield outIncluded.build();
+
+          if (FIXTURE.usingModulesDir) {
+            expect(outExcluded.readDir()).to.eql(['modules/', 'modules/engine.js', 'modules/utils/', 'modules/utils/bar.js', 'modules/utils/baz.js', 'modules/utils/herp.js' ]);
+            expect(outIncluded.readDir()).to.eql(['modules/','modules/routes.js', 'modules/utils/', 'modules/utils/derp.js', 'modules/utils/foo.js' ]);
+          } else {
+            expect(outExcluded.readDir()).to.eql(['engine.js', 'utils/', 'utils/bar.js', 'utils/baz.js', 'utils/herp.js' ]);
+            expect(outIncluded.readDir()).to.eql(['routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js' ]);
+          }
+
+          if (FIXTURE.usingModulesDir) {
+            input.write({
+              'modules': {
+                'utils': {
+                  'baz.js': null
+                }
+              }
+            });
+          } else {
+            input.write({
+              'utils': {
+                'baz.js': null
+              }
+            });
+          }
+
+          yield outExcluded.build();
+          yield outIncluded.build();
+
+          if (FIXTURE.usingModulesDir) {
+            expect(outExcluded.readDir()).to.eql(['modules/', 'modules/engine.js', 'modules/utils/', 'modules/utils/bar.js', 'modules/utils/herp.js']);
+            expect(outIncluded.readDir()).to.eql(['modules/', 'modules/routes.js', 'modules/utils/', 'modules/utils/derp.js', 'modules/utils/foo.js' ]);
+          } else {
+            expect(outExcluded.readDir()).to.eql(['engine.js', 'utils/', 'utils/bar.js', 'utils/herp.js' ]);
+            expect(outIncluded.readDir()).to.eql(['routes.js', 'utils/', 'utils/derp.js', 'utils/foo.js']);
+          }
+        }));
       });
     });
   });
