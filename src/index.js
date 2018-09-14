@@ -52,6 +52,10 @@ module.exports = class BroccoliDependencyFunnel extends Plugin {
     this._nonDepGraphTree = undefined;
   }
 
+  nextNonDepGraph() {
+    return filterDirectory(this.inputPaths[0], '', module => this._depGraph.indexOf(module) === -1).sort();
+  }
+
   build() {
     let node = heimdall.start({
       name: 'BroccoliDependencyFunnel (Build)',
@@ -59,6 +63,7 @@ module.exports = class BroccoliDependencyFunnel extends Plugin {
     }, BroccoliDependencyFunnelSchema);
     let stats = node.stats;
     let inputPath = this.inputPaths[0];
+    let nextNonDepGraph;
 
     // Check for changes in the files included in the dependency graph
     if (this._depGraph) {
@@ -67,8 +72,12 @@ module.exports = class BroccoliDependencyFunnel extends Plugin {
       let hasDepGraphChanges = depGraphPatch.length !== 0;
 
       if (!hasDepGraphChanges) {
-        let incomingNonDepGraphTree = this._getFSTree(this._nonDepGraph);
+        nextNonDepGraph = this.nextNonDepGraph();
+        let incomingNonDepGraphTree = this._getFSTree(nextNonDepGraph);
+
         let nonDepGraphPatch = this._nonDepGraphTree.calculatePatch(incomingNonDepGraphTree);
+        this._nonDepGraphTree = incomingNonDepGraphTree;
+        this._nonDepGraph = nextNonDepGraph;
         let hasNonDepGraphChanges = nonDepGraphPatch.length !== 0;
 
         if (!hasNonDepGraphChanges) {
@@ -146,9 +155,7 @@ module.exports = class BroccoliDependencyFunnel extends Plugin {
     logger.debug('Mr DepWalk executed');
 
     this._depGraph = modules.sort();
-    this._nonDepGraph = filterDirectory(inputPath, '', function(module) {
-      return modules.indexOf(module) === -1;
-    }).sort();
+    this._nonDepGraph = nextNonDepGraph || this.nextNonDepGraph();
 
     rimraf.sync(this.outputPath);
 
